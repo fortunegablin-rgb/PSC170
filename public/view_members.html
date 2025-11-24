@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View All Members - Bus System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>PSC170</h1>
+            <nav>
+                <a href="index.html">Dashboard</a>
+                <a href="add_member.html">Add Member</a>
+                <a href="recharge.html">Recharge</a>
+                <a href="conductor.html">Conductor</a>
+                <a href="view_logs.html">View Logs</a>
+            </nav>
+        </header>
+
+        <main>
+            <h2>All Registered Members</h2>
+            <div class="card">
+                <div class="table-responsive">
+                    <table id="members-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Contact</th>
+                                <th>Balance (ZW$)</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="members-list">
+                            <!-- Members will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="loading" class="message">Loading members...</div>
+                <div id="error-message" class="error"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Password Modal -->
+    <div id="password-modal" class="modal">
+        <div class="modal-content">
+            <h3>Admin Verification</h3>
+            <p>Please enter the admin password to confirm deletion.</p>
+            <input type="password" id="admin-password-input" placeholder="Password">
+            <div class="modal-actions">
+                <button onclick="closeModal()" class="btn-small" style="background-color: #95a5a6;">Cancel</button>
+                <button onclick="confirmDelete()" class="btn-small btn-danger">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Load members when page loads
+        document.addEventListener('DOMContentLoaded', loadAllMembers);
+    </script>
+</body>
+
+</html>

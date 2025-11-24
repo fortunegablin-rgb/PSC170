@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - PSC170</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <h1>PSC170</h1>
+        <nav>
+            <a href="index.html">Dashboard</a>
+            <a href="add_member.html">Add Member</a>
+            <a href="recharge.html">Recharge</a>
+            <a href="conductor.html">Conductor</a>
+            <a href="view_logs.html">View Logs</a>
+        </nav>
+    </header>
+
+    <main>
+        <h2>Settings</h2>
+        <div class="card">
+            <h3>Change Admin Password</h3>
+            <form id="changePasswordForm" onsubmit="changePassword(event)">
+                <div class="form-group">
+                    <label for="current_password">Current Password:</label>
+                    <input type="password" id="current_password" required>
+                </div>
+                <div class="form-group">
+                    <label for="new_password">New Password:</label>
+                    <input type="password" id="new_password" required>
+                </div>
+                <button type="submit">Update Password</button>
+            </form>
+            <div id="alert-box" class="alert"></div>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

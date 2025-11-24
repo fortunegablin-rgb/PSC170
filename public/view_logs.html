@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Logs - Bus Fare System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <h1>PSC170</h1>
+        <nav>
+            <a href="index.html">Dashboard</a>
+            <a href="add_member.html">Add Member</a>
+            <a href="recharge.html">Recharge</a>
+            <a href="conductor.html">Conductor</a>
+            <a href="view_logs.html">View Logs</a>
+        </nav>
+    </header>
+
+    <main>
+        <div class="card">
+            <h2>Member Logs</h2>
+            <div class="form-group">
+                <label for="search_member_id">Enter Member ID</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="search_member_id" placeholder="Member ID">
+                    <button onclick="loadLogs()" style="width: auto;">Search</button>
+                </div>
+            </div>
+            <div id="alert-box" class="alert"></div>
+
+            <div id="logs-container" style="display: none;">
+                <h3>Member Details</h3>
+                <p><strong>Name:</strong> <span id="member-name"></span></p>
+                <p><strong>Current Balance:</strong> <span id="member-balance" class="balance-display"></span></p>
+
+                <div class="card">
+                    <h3>Trip History</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Conductor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trips-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Payment History</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Receipt</th>
+                                </tr>
+                            </thead>
+                            <tbody id="payments-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="app.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Fare System - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <h1>PSC170</h1>
+        <nav>
+            <a href="index.html">Dashboard</a>
+            <a href="add_member.html">Add Member</a>
+            <a href="recharge.html">Recharge</a>
+            <a href="conductor.html">Conductor</a>
+            <a href="view_logs.html">View Logs</a>
+        </nav>
+    </header>
+
+    <main>
+        <h2>Dashboard</h2>
+
+        <!-- Stats Row -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Members</h3>
+                <p id="total-members" class="stat-value">Loading...</p>
+            </div>
+            <div class="stat-card">
+                <h3>Total Revenue</h3>
+                <p id="total-revenue" class="stat-value">Loading...</p>
+            </div>
+        </div>
+
+        <div class="dashboard-content">
+            <!-- Quick Actions -->
+            <div class="actions-section">
+                <h3>Quick Actions</h3>
+                <div class="dashboard-grid">
+                    <a href="add_member.html" class="dashboard-card">
+                        <h3>Add Member</h3>
+                        <p>Register new user</p>
+                    </a>
+                    <a href="recharge.html" class="dashboard-card">
+                        <h3>Recharge</h3>
+                        <p>Add funds</p>
+                    </a>
+                    <a href="conductor.html" class="dashboard-card">
+                        <h3>Conductor</h3>
+                        <p>Deduct fare</p>
+                    </a>
+                    <a href="view_logs.html" class="dashboard-card">
+                        <h3>View Logs</h3>
+                        <p>Check history</p>
+                    </a>
+                    <a href="view_members.html" class="dashboard-card">
+                        <h3>All Members</h3>
+                        <p>View list</p>
+                    </a>
+                    <a href="settings.html" class="dashboard-card">
+                        <h3>Settings</h3>
+                        <p>Admin config</p>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="activity-section">
+                <h3>Recent Activity</h3>
+                <div class="card">
+                    <div class="table-responsive">
+                        <table id="activity-table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activity-list">
+                                <tr>
+                                    <td colspan="3">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="app.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', loadDashboardStats);
+        </script>
+    </main>
+</body>
+
+</html>
