@@ -38,7 +38,7 @@ function createTables() {
             FOREIGN KEY (member_id) REFERENCES members (id)
         )`);
 
-        // Settings Table (for admin password)
+        // Settings Table (for admin password and fare prices)
         db.run(`CREATE TABLE IF NOT EXISTS settings (
             key TEXT PRIMARY KEY,
             value TEXT
@@ -46,6 +46,23 @@ function createTables() {
             if (!err) {
                 // Insert default password if not exists
                 db.run(`INSERT OR IGNORE INTO settings (key, value) VALUES ('admin_password', 'admin123')`);
+                // Insert default fare prices if not exist
+                db.run(`INSERT OR IGNORE INTO settings (key, value) VALUES ('fare_one_way', '6.28')`);
+                db.run(`INSERT OR IGNORE INTO settings (key, value) VALUES ('fare_two_way', '12.56')`);
+            }
+        });
+
+        // Users Table (for authentication)
+        db.run(`CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            role TEXT NOT NULL CHECK(role IN ('admin', 'conductor'))
+        )`, (err) => {
+            if (!err) {
+                // Insert default users if not exist
+                db.run(`INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')`);
+                db.run(`INSERT OR IGNORE INTO users (username, password, role) VALUES ('conductor', 'conductor123', 'conductor')`);
             }
         });
 

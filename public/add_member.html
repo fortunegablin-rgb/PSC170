@@ -4,8 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Member - Bus Fare System</title>
+    <title>Add Member - PSC170</title>
     <link rel="stylesheet" href="style.css">
+    <script src="auth.js"></script>
 </head>
 
 <body>
@@ -42,6 +43,10 @@
         </div>
     </main>
     <script src="app.js"></script>
+    <script>
+        // Require auth (admin or conductor)
+        requireAuth(['admin', 'conductor']);
+    </script>
 </body>
 
 </html>

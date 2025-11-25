@@ -327,3 +327,77 @@ async function loadDashboardStats() {
         console.error("Error loading dashboard stats:", error);
     }
 }
+
+async function updateFares(event) {
+    event.preventDefault();
+    const admin_password = document.getElementById('admin_password_fares').value;
+    const fare_one_way = document.getElementById('fare_one_way').value;
+    const fare_two_way = document.getElementById('fare_two_way').value;
+
+    try {
+        const response = await fetch(`${API_URL}/settings/fares`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ admin_password, fare_one_way, fare_two_way })
+        });
+        const data = await response.json();
+
+        const fareAlertBox = document.getElementById('fare-alert-box');
+        if (response.ok) {
+            fareAlertBox.className = 'alert success';
+            fareAlertBox.innerHTML = `Fares updated! One-Way: ZW$ ${data.fare_one_way.toFixed(2)}, Two-Way: ZW$ ${data.fare_two_way.toFixed(2)}`;
+            fareAlertBox.style.display = 'block';
+            document.getElementById('updateFaresForm').reset();
+        } else {
+            fareAlertBox.className = 'alert error';
+            fareAlertBox.innerHTML = data.error;
+            fareAlertBox.style.display = 'block';
+        }
+
+        setTimeout(() => {
+            fareAlertBox.style.display = 'none';
+        }, 5000);
+    } catch (error) {
+        const fareAlertBox = document.getElementById('fare-alert-box');
+        fareAlertBox.className = 'alert error';
+        fareAlertBox.innerHTML = 'Network error';
+        fareAlertBox.style.display = 'block';
+    }
+}
+
+async function updateUserPassword(event) {
+    event.preventDefault();
+    const admin_password = document.getElementById('admin_password_users').value;
+    const username = document.getElementById('user_select').value;
+    const new_password = document.getElementById('new_user_password').value;
+
+    try {
+        const response = await fetch(`${API_URL}/settings/user-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ admin_password, username, new_password })
+        });
+        const data = await response.json();
+
+        const alertBox = document.getElementById('user-password-alert-box');
+        if (response.ok) {
+            alertBox.className = 'alert success';
+            alertBox.innerHTML = `${data.message}. Please use the new password on next login.`;
+            alertBox.style.display = 'block';
+            document.getElementById('updateUserPasswordForm').reset();
+        } else {
+            alertBox.className = 'alert error';
+            alertBox.innerHTML = data.error;
+            alertBox.style.display = 'block';
+        }
+
+        setTimeout(() => {
+            alertBox.style.display = 'none';
+        }, 5000);
+    } catch (error) {
+        const alertBox = document.getElementById('user-password-alert-box');
+        alertBox.className = 'alert error';
+        alertBox.innerHTML = 'Network error';
+        alertBox.style.display = 'block';
+    }
+}

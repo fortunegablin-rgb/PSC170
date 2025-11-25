@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - PSC170</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-container h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .login-container p {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .alert {
+            display: none;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .alert.error {
+            background-color: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+
+        .credentials-hint {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .credentials-hint strong {
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <h1>🚌 PSC170</h1>
+        <p>Bus Fare Management System</p>
+
+        <div id="alert-box" class="alert"></div>
+
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" placeholder="Enter username" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Enter password" required>
+            </div>
+
+            <button type="submit" id="loginBtn">Login</button>
+        </form>
+    </div>
+
+    <script>
+        const API_URL = '/api';
+
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const alertBox = document.getElementById('alert-box');
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Logging in...';
+
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Store token and user info
+                    localStorage.setItem('auth_token', data.token);
+                    localStorage.setItem('user_role', data.user.role);
+                    localStorage.setItem('username', data.user.username);
+
+                    // Redirect based on role
+                    if (data.user.role === 'admin') {
+                        window.location.href = 'index.html';
+                    } else {
+                        window.location.href = 'conductor.html';
+                    }
+                } else {
+                    alertBox.className = 'alert error';
+                    alertBox.textContent = data.error;
+                    alertBox.style.display = 'block';
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Login';
+                }
+            } catch (error) {
+                alertBox.className = 'alert error';
+                alertBox.textContent = 'Network error. Please try again.';
+                alertBox.style.display = 'block';
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Login';
+            }
+        }
+
+        // Redirect if already logged in
+        if (localStorage.getItem('auth_token')) {
+            const role = localStorage.getItem('user_role');
+            if (role === 'admin') {
+                window.location.href = 'index.html';
+            } else {
+                window.location.href = 'conductor.html';
+            }
+        }
+    </script>
+</body>
+
+</html>

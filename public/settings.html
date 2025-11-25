@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Settings - PSC170</title>
     <link rel="stylesheet" href="style.css">
+    <script src="auth.js"></script>
 </head>
 
 <body>
@@ -37,9 +38,57 @@
             </form>
             <div id="alert-box" class="alert"></div>
         </div>
+
+        <div class="card">
+            <h3>Update Bus Fares</h3>
+            <p style="color: #666; margin-bottom: 15px;">Change bus fare prices when they change in real life.</p>
+            <form id="updateFaresForm" onsubmit="updateFares(event)">
+                <div class="form-group">
+                    <label for="fare_one_way">One-Way Fare (ZW$):</label>
+                    <input type="number" id="fare_one_way" step="0.01" min="0.01" placeholder="6.28" required>
+                </div>
+                <div class="form-group">
+                    <label for="fare_two_way">Two-Way Fare (ZW$):</label>
+                    <input type="number" id="fare_two_way" step="0.01" min="0.01" placeholder="12.56" required>
+                </div>
+                <div class="form-group">
+                    <label for="admin_password_fares">Admin Password:</label>
+                    <input type="password" id="admin_password_fares" required>
+                </div>
+                <button type="submit">Update Fares</button>
+            </form>
+            <div id="fare-alert-box" class="alert"></div>
+        </div>
+
+        <div class="card">
+            <h3>Manage User Passwords</h3>
+            <p style="color: #666; margin-bottom: 15px;">Change login passwords for admin or conductor accounts.</p>
+            <form id="updateUserPasswordForm" onsubmit="updateUserPassword(event)">
+                <div class="form-group">
+                    <label for="user_select">Select User:</label>
+                    <select id="user_select" required>
+                        <option value="admin">Admin</option>
+                        <option value="conductor">Conductor</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="new_user_password">New Password:</label>
+                    <input type="password" id="new_user_password" minlength="4" required>
+                </div>
+                <div class="form-group">
+                    <label for="admin_password_users">Admin Password (to confirm):</label>
+                    <input type="password" id="admin_password_users" required>
+                </div>
+                <button type="submit">Update User Password</button>
+            </form>
+            <div id="user-password-alert-box" class="alert"></div>
+        </div>
     </main>
 
     <script src="app.js"></script>
+    <script>
+        requireAuth(['admin']);
+    </script>
 </body>
 
 </html>

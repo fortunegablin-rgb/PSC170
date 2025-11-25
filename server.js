@@ -33,6 +33,62 @@ setInterval(() => {
 
 // --- API Endpoints ---
 
+// Authentication APIs
+app.post('/api/auth/login', (req, res) => {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({ error: "Username and password required" });
+    }
+
+    db.get(`SELECT * FROM users WHERE username = ? AND password = ?`, [username, password], (err, user) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        if (!user) {
+            return res.status(401).json({ error: "Invalid username or password" });
+        }
+
+        // Create simple token (in production, use JWT)
+        const token = Buffer.from(`${user.username}:${user.role}:${Date.now()}`).toString('base64');
+
+        res.json({
+            success: true,
+            user: {
+                id: user.id,
+                username: user.username,
+                role: user.role
+            },
+            token: token
+        });
+    });
+});
+
+app.post('/api/auth/logout', (req, res) => {
+    // Client-side will clear token
+    res.json({ success: true, message: "Logged out successfully" });
+});
+
+app.get('/api/auth/me', (req, res) => {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+
+    if (!token) {
+        return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+        const decoded = Buffer.from(token, 'base64').toString();
+        const [username, role] = decoded.split(':');
+
+        res.json({
+            username,
+            role
+        });
+    } catch (error) {
+        res.status(401).json({ error: "Invalid token" });
+    }
+});
+
+
 // 1. Add Member
 app.post('/api/members', (req, res) => {
     const { name, contact, initial_payment } = req.body;
@@ -120,74 +176,84 @@ app.post('/api/payments', (req, res) => {
 
 // 5. Deduct Trip (Conductor)
 app.post('/api/trips', (req, res) => {
-    const { member_id, conductor_id, trip_type } = req.body; // trip_type: 'one-way' or 'two-way' (default one-way)
+    const { member_id, conductor_id, trip_type } = req.body;
 
-    // Default to one-way if not specified or invalid
-    const fare = (trip_type === 'two-way') ? FARE_TWO_WAY : FARE_ONE_WAY;
-
-    // Check for duplicate deduction
-    const now = Date.now();
-    if (recentDeductions.has(member_id)) {
-        const lastDeduction = recentDeductions.get(member_id);
-        const timeSinceLastDeduction = now - lastDeduction.timestamp;
-
-        if (timeSinceLastDeduction < DEDUCTION_COOLDOWN_MS) {
-            // Check if it's the same fare and conductor (likely duplicate)
-            if (lastDeduction.fare === fare && lastDeduction.conductor_id === conductor_id) {
-                return res.status(429).json({
-                    error: `Duplicate deduction detected. Please wait ${Math.ceil((DEDUCTION_COOLDOWN_MS - timeSinceLastDeduction) / 1000)} seconds before deducting again.`,
-                    cooldown_remaining_seconds: Math.ceil((DEDUCTION_COOLDOWN_MS - timeSinceLastDeduction) / 1000)
-                });
-            }
-        }
-    }
-
-    db.get(`SELECT * FROM members WHERE id = ?`, [member_id], (err, row) => {
+    // Fetch current fare prices from database
+    db.all(`SELECT key, value FROM settings WHERE key IN ('fare_one_way', 'fare_two_way')`, [], (err, settings) => {
         if (err) return res.status(500).json({ error: err.message });
-        if (!row) return res.status(404).json({ error: "Member not found" });
 
-        if (row.balance < fare) {
-            return res.status(400).json({
-                error: "Insufficient balance. Please recharge.",
-                current_balance: row.balance,
-                required: fare
-            });
-        }
+        // Parse fare values from database
+        const fares = {};
+        settings.forEach(setting => {
+            fares[setting.key] = parseFloat(setting.value);
+        });
 
-        const newBalance = row.balance - fare;
-        const date = new Date().toISOString();
+        const FARE_ONE_WAY = fares.fare_one_way || 6.28;
+        const FARE_TWO_WAY = fares.fare_two_way || 12.56;
 
-        db.run(`UPDATE members SET balance = ? WHERE id = ?`, [newBalance, member_id], (err) => {
-            if (err) return res.status(500).json({ error: err.message });
+        // Default to one-way if not specified or invalid
+        const fare = (trip_type === 'two-way') ? FARE_TWO_WAY : FARE_ONE_WAY;
 
-            db.run(`INSERT INTO trips (member_id, amount, date, conductor_id) VALUES (?, ?, ?, ?)`,
-                [member_id, fare, date, conductor_id || 'Unknown'],
-                (err) => {
-                    if (err) return res.status(500).json({ error: err.message });
+        // Check for duplicate deduction
+        const now = Date.now();
+        if (recentDeductions.has(member_id)) {
+            const lastDeduction = recentDeductions.get(member_id);
+            const timeSinceLastDeduction = now - lastDeduction.timestamp;
 
-                    // Record this deduction to prevent duplicates
-                    recentDeductions.set(member_id, {
-                        timestamp: now,
-                        fare: fare,
-                        conductor_id: conductor_id || 'Unknown'
-                    });
-
-                    let warning = null;
-                    if (newBalance < LOW_BALANCE_THRESHOLD) {
-                        warning = "Balance running low. Please recharge soon.";
-                    }
-
-                    res.json({
-                        member_id,
-                        member_name: row.name,
-                        deducted: fare,
-                        old_balance: row.balance,
-                        new_balance: newBalance,
-                        warning: warning,
-                        message: "Trip deducted successfully"
+            if (timeSinceLastDeduction < DEDUCTION_COOLDOWN_MS) {
+                // Check if it's the same fare and conductor (likely duplicate)
+                if (lastDeduction.fare === fare && lastDeduction.conductor_id === conductor_id) {
+                    return res.status(429).json({
+                        error: `Duplicate deduction detected. Please wait ${Math.ceil((DEDUCTION_COOLDOWN_MS - timeSinceLastDeduction) / 1000)} seconds before deducting again.`,
+                        cooldown_remaining_seconds: Math.ceil((DEDUCTION_COOLDOWN_MS - timeSinceLastDeduction) / 1000)
                     });
                 }
-            );
+            }
+        }
+
+        db.get(`SELECT * FROM members WHERE id = ?`, [member_id], (err, row) => {
+            if (err) return res.status(500).json({ error: err.message });
+            if (!row) return res.status(404).json({ error: "Member not found" });
+
+            // Allow deduction even with negative balance
+            const newBalance = row.balance - fare;
+            const date = new Date().toISOString();
+
+            db.run(`UPDATE members SET balance = ? WHERE id = ?`, [newBalance, member_id], (err) => {
+                if (err) return res.status(500).json({ error: err.message });
+
+                db.run(`INSERT INTO trips (member_id, amount, date, conductor_id) VALUES (?, ?, ?, ?)`,
+                    [member_id, fare, date, conductor_id || 'Unknown'],
+                    (err) => {
+                        if (err) return res.status(500).json({ error: err.message });
+
+                        // Record this deduction to prevent duplicates
+                        recentDeductions.set(member_id, {
+                            timestamp: now,
+                            fare: fare,
+                            conductor_id: conductor_id || 'Unknown'
+                        });
+
+                        // Set appropriate warnings based on balance
+                        let warning = null;
+                        if (newBalance < 0) {
+                            warning = `⚠️ NEGATIVE BALANCE: ZW$ ${newBalance.toFixed(2)}. Member owes money!`;
+                        } else if (newBalance < LOW_BALANCE_THRESHOLD) {
+                            warning = "Balance running low. Please recharge soon.";
+                        }
+
+                        res.json({
+                            member_id,
+                            member_name: row.name,
+                            deducted: fare,
+                            old_balance: row.balance,
+                            new_balance: newBalance,
+                            warning: warning,
+                            message: "Trip deducted successfully"
+                        });
+                    }
+                );
+            });
         });
     });
 });
@@ -289,6 +355,98 @@ app.post('/api/settings/password', (req, res) => {
         db.run(`UPDATE settings SET value = ? WHERE key = 'admin_password'`, [new_password], (err) => {
             if (err) return res.status(500).json({ error: err.message });
             res.json({ message: "Password updated successfully" });
+        });
+    });
+});
+
+// 10. Get Current Bus Fares
+app.get('/api/settings/fares/current', (req, res) => {
+    db.all(`SELECT key, value FROM settings WHERE key IN ('fare_one_way', 'fare_two_way')`, [], (err, settings) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        const fares = {
+            fare_one_way: 6.28,  // defaults
+            fare_two_way: 12.56
+        };
+
+        settings.forEach(setting => {
+            fares[setting.key] = parseFloat(setting.value);
+        });
+
+        res.json(fares);
+    });
+});
+
+// 11. Update Bus Fares (Admin Only)
+app.post('/api/settings/fares', (req, res) => {
+    const { admin_password, fare_one_way, fare_two_way } = req.body;
+
+    // Validate inputs
+    if (!fare_one_way || !fare_two_way || isNaN(fare_one_way) || isNaN(fare_two_way)) {
+        return res.status(400).json({ error: "Please provide valid fare amounts" });
+    }
+
+    if (parseFloat(fare_one_way) <= 0 || parseFloat(fare_two_way) <= 0) {
+        return res.status(400).json({ error: "Fare amounts must be greater than zero" });
+    }
+
+    // Verify admin password
+    db.get(`SELECT value FROM settings WHERE key = 'admin_password'`, [], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        const dbPassword = row ? row.value : 'admin123';
+
+        if (admin_password !== dbPassword) {
+            return res.status(403).json({ error: "Incorrect admin password" });
+        }
+
+        // Update both fare prices
+        db.run(`UPDATE settings SET value = ? WHERE key = 'fare_one_way'`, [fare_one_way], (err) => {
+            if (err) return res.status(500).json({ error: err.message });
+
+            db.run(`UPDATE settings SET value = ? WHERE key = 'fare_two_way'`, [fare_two_way], (err) => {
+                if (err) return res.status(500).json({ error: err.message });
+
+                res.json({
+                    message: "Fare prices updated successfully",
+                    fare_one_way: parseFloat(fare_one_way),
+                    fare_two_way: parseFloat(fare_two_way)
+                });
+            });
+        });
+    });
+});
+
+// 12. Change User Login Password (Admin Only)
+app.post('/api/settings/user-password', (req, res) => {
+    const { admin_password, username, new_password } = req.body;
+
+    if (!new_password || new_password.length < 4) {
+        return res.status(400).json({ error: "New password must be at least 4 characters" });
+    }
+
+    if (!username || !['admin', 'conductor'].includes(username)) {
+        return res.status(400).json({ error: "Invalid username" });
+    }
+
+    // Verify admin password
+    db.get(`SELECT value FROM settings WHERE key = 'admin_password'`, [], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        const dbPassword = row ? row.value : 'admin123';
+
+        if (admin_password !== dbPassword) {
+            return res.status(403).json({ error: "Incorrect admin password" });
+        }
+
+        // Update user password
+        db.run(`UPDATE users SET password = ? WHERE username = ?`, [new_password, username], (err) => {
+            if (err) return res.status(500).json({ error: err.message });
+
+            res.json({
+                message: `Password updated successfully for ${username}`,
+                username: username
+            });
         });
     });
 });

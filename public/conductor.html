@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conductor - Bus Fare System</title>
     <link rel="stylesheet" href="style.css">
+    <script src="auth.js"></script>
 </head>
 
 <body>
@@ -36,8 +37,8 @@
                 <div class="form-group">
                     <label for="trip_type">Trip Type</label>
                     <select id="trip_type">
-                        <option value="one-way">One-Way (ZW$ 6.28)</option>
-                        <option value="two-way">Two-Way (ZW$ 12.56)</option>
+                        <option value="one-way">One-Way (Loading...)</option>
+                        <option value="two-way">Two-Way (Loading...)</option>
                     </select>
                 </div>
                 <button type="submit">Deduct Fare</button>
@@ -45,6 +46,25 @@
         </div>
     </main>
     <script src="app.js"></script>
+    <script>
+        // Require auth (admin or conductor)
+        requireAuth(['admin', 'conductor']);
+        // Load current fare prices when page loads
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const res = await fetch('/api/settings/fares/current');
+                if (res.ok) {
+                    const fares = await res.json();
+                    const tripTypeSelect = document.getElementById('trip_type');
+                    tripTypeSelect.options[0].text = `One-Way (ZW$ ${fares.fare_one_way.toFixed(2)})`;
+                    tripTypeSelect.options[1].text = `Two-Way (ZW$ ${fares.fare_two_way.toFixed(2)})`;
+                }
+            } catch (error) {
+                console.error('Error loading fares:', error);
+            }
+        });
+    </script>
+
 </body>
 
 </html>
